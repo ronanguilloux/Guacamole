@@ -17,6 +17,7 @@ var db, Document, Tag;
 var app = module.exports = express.createServer(
     form({
         keepExtensions: true,
+        // Imagick pour node https://github.com/rsms/node-imagemagick
         uploadDir: './uploads'
     })
 );
