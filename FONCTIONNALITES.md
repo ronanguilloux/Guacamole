@@ -1,9 +1,8 @@
 
-
 Présentation
 ============
 
-Guacamole est une application de gestion électronique de docuemnts (GED) en ligne.
+Guacamole est une application de gestion électronique de documents (GED) en ligne.
 
 Modèles
 =======
