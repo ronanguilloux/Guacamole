@@ -1,0 +1,24 @@
+TAGS
+- recherche tags
+- ajout tag
+
+RECHERCHE
+- api rest
+- interface grahique (cf smiecdoc)
+
+DOCUMENTS
+- édition
+- gestion vignettes
+
+DROITS
+- sur tag
+- affichage / édition
+- api key ? sécurité des webservices
+
+IMPORT ARBORESCENCE
+
+STATISTIQUES
+
+INTERFACE STANDALONE
+- node.js (?)
+- synchronisation
