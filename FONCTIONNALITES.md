@@ -33,10 +33,11 @@ Contributeur :
 Version 1.0
 ============
 
-Scénarios de navigation
------------------------
+Eléments communs à tous les scénarios de navigation
+---------------------------------------------------
 
-Toutes les listes sont paginées et triées par défaut sur la date de modification en ordre anétchronologique.
+Toutes les listes sont paginées et triées par défaut sur la date de modification en ordre antéchronologique.
+
 Tous les boutons de retour renvoient au contexte immédiatement précédent : tri précédent, pagination précédente.
 
 * Filtres : critières de recherche et de tri.
@@ -51,9 +52,11 @@ Vue "Accueil"
 
 Affichage de tous les documents en tableau, filtrable par tag uniquement, paginé par défaut
 
+Pour chaque item de la liste :
+
 * clic sur un document => affichage de la vue "détail d'un document"
-* possibilité d'ajouter un document au panier (sélection courante de l'utilisateur identifié)
-* possibilité de sélectionner plusieurs documents et de les tagger
+* 1 bouton : possibilité d'ajouter un document au panier (sélection courante de l'utilisateur identifié)
+* 1 checkbox : possibilité de sélectionner plusieurs documents et de les tagger
 
 Affichage de tous les tags triés par ordre alphabétique
 
@@ -64,7 +67,7 @@ Affichage de tous les tags triés par ordre alphabétique
 Vue "Panier"
 ------------
 
-Sélection de document réalisée par l'utilisateur au fil de la visite
+Sélection de document, réalisée manuellement par l'utilisateur au fil de sa visite
 
 Sur le panier, plusieurs actions possibles sur les documents sélectionnés :
 
@@ -87,7 +90,7 @@ Vue "Détail d'un document"
 
 * présentation de toutes les informations disponibles
 * affichage d'une vignette à chaque fois que cela est possible (extraction de couverture d'un pdf)
-* 3 boutons d'action : éditer/modifier/retour à la liste (retour dans le contexte précédent)
+* 3 boutons d'action : éditer / modifier / retour à la liste (retour dans le contexte précédent)
 
 Vue "Edition d'un document"
 ---------------------------
