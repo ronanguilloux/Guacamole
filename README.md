@@ -5,7 +5,7 @@ Guacamole
 Summary
 -------
 
-Guacamolme is a digital asset management, document-oriented, nodejs-based API & Web app.
+Guacamolme is a digital asset management, document-oriented, both nodejs-based API REST server & web application.
 It is MIT-licensed.
 
 Dependencies
@@ -17,6 +17,10 @@ Dependencies
 * mongoose
 * underscoree
 
+Uses
+
+* Mongo as DB
+* Backbone as frontend MVC structure
 
 Installation
 ------------
