@@ -8,6 +8,7 @@ Modèles
 =======
 
 Document :
+
 * identifiant unique
 * url unique ('./documents/[slug]')
 * titre
@@ -19,9 +20,11 @@ Document :
 * date de dernière modification
 
 Tag :
+
 * label
 
 Contributeur :
+
 * nom
 * prénom
 * email
@@ -47,11 +50,13 @@ Vue "Accueil"
 -------------
 
 Affichage de tous les documents en tableau, filtrable par tag uniquement, paginé par défaut
+
 * clic sur un document => affichage de la vue "détail d'un document"
 * possibilité d'ajouter un document au panier (sélection courante de l'utilisateur identifié)
 * possibilité de sélectionner plusieurs documents et de les tagger
 
 Affichage de tous les tags triés par ordre alphabétique
+
 * clic sur un tag => mise en évidence du tag dans une liste des tags courant, filtrage de la liste des documents
 * on peut cliquer sur plusieurs tags pour combiner plusieurs filtres
 * on peut retirer un tag de la liste des critères pour réduire/augmenter le filtrage courant
@@ -60,7 +65,9 @@ Vue "Panier"
 ------------
 
 Sélection de document réalisée par l'utilisateur au fil de la visite
+
 Sur le panier, plusieurs actions possibles sur les documents sélectionnés :
+
 * supprimer en masse
 * ajouter un tag : champ de texte libre
 * retirer un tag : proposé en liste déroulante, liste limitée aux tags trouvés dans les documents sélectionnés
@@ -69,6 +76,7 @@ Vue "Recherche avancée"
 -----------------------
 
 Affichage des différents critères de recherche sous forme de formulaire :
+
 * par titre, par description,
 * par tags, liste des tags séparés par une virgule
 * par date de modification (datepicker)
@@ -85,6 +93,7 @@ Vue "Edition d'un document"
 ---------------------------
 
 Formulaire permettant de modifier les champs d'un document :
+
 * titre
 * description
 * tags
@@ -93,6 +102,7 @@ Formulaire permettant de modifier les champs d'un document :
 
 Vue "Edition d'un tag"
 ----------------------
+
 * Modification du libellé d'un tag
 * Suppression d'un tag, proposé uniquenemt si plus aucun document ne lui est rattaché
 
