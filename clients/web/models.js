@@ -1,7 +1,15 @@
-function defineModels(mongoose, fn){
+function define(mongoose, fn){
+
+    /*
+     * Vars
+     */
 
     var Schema = mongoose.Schema,
         ObjectId = Schema.ObjectId;
+
+    /*
+     * Schemas : Document
+     */
 
     Document_Schema = new Schema({
         'slug': { type: String, index: { unique: true }, set: function(v){
@@ -23,12 +31,14 @@ function defineModels(mongoose, fn){
             tags = _.uniq(tags);
             // Save new tags
             tags.forEach(function(tag_label){
+                if(tag_label.trim()){
                     Tag.findOne({ label: tag_label }, function(err, tag){
                         if (!tag){
                             tag = new Tag({label: tag_label});
                             tag.save();
                         }
                     });
+                }
             });
 
             return tags;
@@ -40,23 +50,29 @@ function defineModels(mongoose, fn){
         }},
         'updated_at': { type: Date, default: Date.now }
     }).pre('save', function (next){ // A tester
-        if (!this.createdAt){
-            this.createdAt = this.updatedAt = new Date;
+        console.log(new Date)
+        if (!this.created_at){
+            this.created_at = this.updated_at = new Date;
         } else {
-            this.updatedAt = new Date;
+            this.updated_at = new Date;
         }
         next();
     });
 
-    // A mettre dans lib
+    // @TODO : A mettre dans une lib
     var slugify = function(s){
         return s.replace(/\s+/ig, '_').replace(/[^a-zA-Z0-9_]+/ig, '').toLowerCase(); // TODO garder les accents (à trans en non accent)
     };
 
+    // @TODO : A mettre dans une lib
     var tagify = function(s){
         // caractères interdits : /&,
         return s.replace(/([\/&,]|::)+/ig, '').trim();
     };
+
+    /*
+     * Schemas : Tag
+     */
 
     Tag_Schema = new Schema({
         'label': { type: String, index: { unique: true }, set: function(v){
@@ -66,7 +82,10 @@ function defineModels(mongoose, fn){
 
     var Document = mongoose.model('Document', Document_Schema);
 
-    // Redéfinition du save
+    /*
+     * Document.prototype.save - redefinition
+     */
+
     Document.prototype._save = Document.prototype.save;
     Document.prototype.save = function(fn){
         var self = this;
@@ -92,4 +111,4 @@ function defineModels(mongoose, fn){
 
 };
 
-exports.defineModels = defineModels;
+exports.define = define;

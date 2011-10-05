@@ -2,7 +2,9 @@ jQuery(function($){
 
 Backbone.emulateHTTP = true;
 
-/* MODEL */
+/*
+ * MODELS : Document, Tag
+ */
 
 var Tag = Backbone.Model.extend({
 
@@ -16,8 +18,12 @@ var Tag = Backbone.Model.extend({
 
     initialize: function(){
         this.id = this.get('_id') || null;
-    }
+    },
 
+    // backbone-form:
+    schema: {
+        label: { type: 'Text' }
+    },
 
 });
 
@@ -35,14 +41,20 @@ var Document = Backbone.Model.extend({
         this.id = this.get('_id') || null;
     },
 
+
+    // backbone-form:
     schema: {
         title: { type: 'Text' },
-        description: { type: 'TextArea' }
+        description: { type: 'TextArea' },
+        tags: { type: 'Text' },
+        //updated_at: { type: 'Text' },
     },
 
 });
 
-/* COLLECTIONS */
+/*
+ * COLLECTIONS : Documents
+ */
 
 var Documents = Backbone.Collection.extend({
 
@@ -101,10 +113,35 @@ var Documents = Backbone.Collection.extend({
 
 });
 
+/*
+ * COLLECTIONS : Tags
+ */
+
 var Tags = Backbone.Collection.extend({
 
     model : Tag,
-    url: '/tags'
+    url: '/tags',
+
+    /*
+     * Build tow arrays of sematic é treview tags,
+     * assuming they are given mixed up in an array
+     * & treeview tags start with the regular '::' separator
+     */
+    getTagsByType : function(tags){
+        var semanticTags = [];
+        var treeviewTags = [];
+        _.each(tags, function(tag){
+            if(tag.indexOf("::") == 0) {
+                treeviewTags.push(tag);
+            }
+            else {
+                semanticTags.push(tag);
+            }
+        });
+        return {'treeview': treeviewTags, 'semantic': semanticTags }
+    }
+
+
 
 });
 
@@ -122,20 +159,50 @@ var Tags = Backbone.Collection.extend({
 
 // helpers:
 
+/*
+ * Date formatter
+ *
+ * TODO : use https://github.com/timrwood/underscore.date instead ? DateJs instead ?
+ */
+var formattedDate = function(v){
+    v = v || null;
+    var formatted = v; // preserve even false value to be deleted
+    if(!isNaN(Date.parse(v))){
+        var dt = new Date(v);
+        var day = dt.getDate();
+        var month = "" + (dt.getMonth()+1);
+        var hours = "" + (dt.getHours()+1);
+        var minutes = "" + (dt.getMinutes()+1);
+        var seconds = "" + (dt.getSeconds()+1);
+        formatted = (day < 10 ) ? "0" + day : day;
+        formatted += "/";
+        formatted += (month < 10 ) ? "0" + month : month;
+        formatted += "/" + dt.getFullYear();
+        formatted += " &agrave; ";
+        formatted += (hours < 10 ) ? "0" + hours : hours;
+        formatted += ":";
+        formatted += (minutes < 10 ) ? "0" + minutes : minutes;
+        formatted += ":";
+        formatted += (seconds < 10 ) ? "0" + seconds : seconds;
+    }
+    return formatted;
+}
+
+
+
 var hideViews = function(){
-    $('#documents').hide();
-    $('#document').hide();
+    $('#list').hide();
+    $('#item').hide();
 };
 
 var emptyViews = function(){
-    $('#documents').empty();
-    $('#document').empty();
+    $('#list').empty();
+    $('#item').empty();
 };
 
-var resetViews = function(){
-    hideViews();
-    emptyViews();
-}
+/*
+ * DocumentEditView
+ */
 
 var DocumentEditView = Backbone.View.extend({
 
@@ -154,14 +221,52 @@ var DocumentEditView = Backbone.View.extend({
 
    render: function(){
         app_router.navigate('documents/' + this.model.attributes.slug);
+        // backbone-form :
         form = new Backbone.Form({ model: this.model });
-        $(this.el).empty().append($('<form>').append(form.render().el).append('<input type="submit" value="ok" />'));
+        var buttons = '<input type="submit" value="Enregistrer" title="Enregistrer vos modifications" />';
+        buttons += '&nbsp;<input type="reset" value="Annuler" title="Annuler vos modifications et retourner à la liste" />';
+        $(this.el).empty().append($('<form>').append(form.render().el).append(buttons));
+        $(this.el).append("<em>Dernière modification : " + formattedDate(this.model.attributes.updated_at) +  "</em>");
+
+
+        // Seperating semantic & treeview tags from the initial tags value
+        var tags = $('#tags', form.el).val().split(',');
+        $('#tags', form.el).val(''); // resetting the form field value
+        tagColl = new Tags();
+        tagList = tagColl.getTagsByType(tags);
+        $('#tags', form.el).val(tagList.semantic.join(', ')); // the semantic ones
+        this.renderLocations(tagList.treeview);
+        /*
+        $(this.el).append("<br />Emplacements : <ul id='locations'><li>" + tagList.treeview.join('</li><li>').split('::').join('/') +  "</li></ul>"); // the treview ones
+        if($('ul#locations').children().length){
+            console.log('no locations ?');
+        }
+        */
+
         return this;
     },
 
+    /*
+     * build the locations list,
+     * @param tags : a treeview tags list
+     */
+    renderLocations : function(tags) {
+        if(tags.length){
+            console.log(tags);
+            var label = '<p>Emplacements&nbsp;:</p>';
+            var hidden = '<input type="hidden" name="treeList" id="treeList" value="' + tags + '" />';
+            $(this.el).append('<div class="locations"><ul>');
+            var list = '';
+            _.each(tags, function(tagLabel){
+                list += '<li>' + tagLabel.split('::').join('/') + '</li>';
+            });
+            // we also conserve a flat list of all locations, cf. submit()
+            $('.locations ul',$(this.el)).before(label).append(list).append(hidden);
+        }
+    },
+
     cancel: function(){
-        $('#document').empty().hide();
-        $('#documents').show();
+        docsView.backToTheList();
     },
 
     submit: function(e){
@@ -172,7 +277,7 @@ var DocumentEditView = Backbone.View.extend({
             var result = this.model.save(form.model,{
                 success:function(model, resp){
                     //new App.Views.Notice({ message: msg });
-                    self.notify('Données enregistrées', 'confirm', docsView.getBack);
+                    self.notify('Données enregistrées', 'confirm', docsView.backToTheList);
                 },
                 error:function(){
                     self.notify('Erreur de connexion distante : Le serveur ne peut pas enregistrer vos modifications.', 'alert');
@@ -198,6 +303,10 @@ var DocumentEditView = Backbone.View.extend({
 
 });
 
+/*
+ * DocumentView
+ */
+
 var DocumentView = Backbone.View.extend({
 
     tagName: 'li',
@@ -216,6 +325,8 @@ var DocumentView = Backbone.View.extend({
 
     render: function(){
         //$(this.el).html('<span>'+this.model.get('title')+'</span><button class="delete">delete</button>');
+        var msg = "Consulter le détail de ce document";
+        $(this.el).attr('title', msg);
         $(this.el).text(this.model.get('title'));
         return this;
     },
@@ -225,10 +336,21 @@ var DocumentView = Backbone.View.extend({
         var documentEditView = new DocumentEditView({
             model: this.model
         });
-        $('#document').empty().show().append(documentEditView.render().el).show();
+        $('#item').empty().show().append(documentEditView.render().el).show();
     }
 
 });
+
+/*
+ * TagView
+ *
+ * 2 types of tags :
+ * * treeview tags (starting with '::')
+ * * semantic tags
+ *
+ * render() manage the left-side tag display, see TagsView
+ *
+ */
 
 var TagView = Backbone.View.extend({
 
@@ -244,9 +366,11 @@ var TagView = Backbone.View.extend({
     },
 
     render: function(){
+    if(undefined != this.model){
         var label = this.model.get('label');
         var span = '<span/>';
 
+        // every "dir" tag (= treeview tags) label starts with '::'
         if (label.indexOf('::') == 0){
             label = label.substr(label.lastIndexOf('::') + 2);
             span = '';
@@ -258,19 +382,33 @@ var TagView = Backbone.View.extend({
 
         $(this.el).html(span + label);
         return this;
+    } else {
+            console.log('@FIXME : undefined model : ');
+            console.log(this);
+            return "n-a";
+        };
     },
 
     select: function(evt){
         evt.stopPropagation();
+
+        $('#item').empty();
+        $('#item').hide();
+        $('#list').show();
+
         if (!this.is_dir) docsView.addTag(this.model.get('label'));
         else docsView.cd(this.model.get('label'));
     },
 
 });
 
+/*
+ * DocumentsView
+ */
+
 var DocumentsView = Backbone.View.extend({
 
-    el: $('#documents'),
+    el: $('#list'),
 
     events: {
         'click .tags li': 'removeTag'
@@ -284,9 +422,11 @@ var DocumentsView = Backbone.View.extend({
 
     render: function(){
         //app_router.navigate('documents/');
-        resetViews();
+//        resetViews();
+
+        $(this.el).empty().show();
         $(this.el).append('<nav><ul></ul></nav>')
-        $(this.el).append('<ul class="tags"></ul><hr>')
+        $(this.el).append('<ul class="tags"></ul><hr>');
         $(this.el).append('<ul class="documents"></ul>');
         $(this.el).show();
         return this;
@@ -310,17 +450,28 @@ var DocumentsView = Backbone.View.extend({
             app_router.navigate(this.collection.genUrl());
             e.remove();
         }
+        this.setTagSelectionLabel();
     },
 
     addTag: function(tag){
         if (this.collection.addTag(tag.trim())){
             //this.appendAll();
             $('ul.tags', this.el).empty();
+            $('#tagsSelectionLabel').remove();
             _.each(this.collection.tags, function(t){
-                $('ul.tags', this.el).append('<li><span/>' + t + '</li>');
+                var msg = "Retirer ce tag de votre sélection";
+                $('ul.tags', this.el).append('<li title="' + msg + '"><span/>' + t + '</li>');
             });
+            this.setTagSelectionLabel();
         }
         app_router.navigate(this.collection.genUrl());
+    },
+
+    setTagSelectionLabel : function(){
+        $('#tagsSelectionLabel').remove();
+        if($('ul.tags').children().length){
+            $('ul.tags').before('<span id="tagsSelectionLabel">Votre sélection :</span>');
+        }
     },
 
     setTags: function(tags){
@@ -353,14 +504,26 @@ var DocumentsView = Backbone.View.extend({
     /*
      * Manage the "Get back to documents list" scenario
      */
-    getBack: function(){
+    backToTheList: function(){
         app_router.navigate('documents/');
+        // refreshing tag list
+        var tagsView = new TagsView({
+            collection: new Tags()
+        });
+        tagsView.render();
+        //app_router.navigate(this.collection.genUrl());
         hideViews();
-        $('#document').empty();
-        $('#documents').show();
+        $('#item').empty();
+        $('#list').show();
     }
 
 });
+
+/*
+ * TagsView
+ *
+ * Manage the left-side tag list
+ */
 
 var TagsView = Backbone.View.extend({
 
@@ -374,8 +537,9 @@ var TagsView = Backbone.View.extend({
     },
 
     render: function(){
+        $(this.el).empty().show();
         $(this.el).append('<div class="tree"></div>');
-        $(this.el).append('<div class="semantics"><input type="text" /><ul></ul></div>');
+        $(this.el).append('<div class="semantics"><input type="text" /><br />Tags :<ul></ul></div>');
         return this;
     },
 
@@ -426,12 +590,15 @@ var TagsView = Backbone.View.extend({
 
 });
 
+/*
+ * Initial views rendering
+ */
+
 
 var docsView = new DocumentsView({
     collection: new Documents()
 });
 docsView.render();
-
 
 var tagsView = new TagsView({
     collection: new Tags()

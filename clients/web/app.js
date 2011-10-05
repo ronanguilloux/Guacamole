@@ -14,8 +14,15 @@ var express = require('express')
     //Document;
     //Tag;
 
+/*
+ * Vars
+ */
+
 var db, Document, Tag;
 
+/*
+ * Server instance
+ */
 var app = module.exports = express.createServer(
     form({
         keepExtensions: true,
@@ -23,7 +30,9 @@ var app = module.exports = express.createServer(
     })
 );
 
-// Configuration
+/*
+ * Server configuration
+ */
 
 app.configure(function(){
     app.set('views', __dirname + '/views');
@@ -45,7 +54,11 @@ app.configure('production', function(){
     app.use(express.errorHandler());
 });
 
-models.defineModels(mongoose, function(){
+/*
+ * Model definition, using mongoose
+ */
+
+models.define(mongoose, function(){
     app.Document = Document = mongoose.model('Document');
     app.Tag = Tag = mongoose.model('Tag');
     db = mongoose.connect('mongodb://localhost/docs');
@@ -54,7 +67,9 @@ models.defineModels(mongoose, function(){
 // HELPERS
 
 
-// Routes
+/*
+ * Routes
+ */
 
 app.get('/', function(req, res){
     res.render('index.jade', { title: 'Docs' });
@@ -62,7 +77,7 @@ app.get('/', function(req, res){
 
 app.post('/', function(req, res){
 
-    req.form.complete(function(err, fields, files){
+    req.form.complete(function(err, fields, files) {
 
         if (!err && files.resource){
             var doc = new Document(_.extend(fields, {

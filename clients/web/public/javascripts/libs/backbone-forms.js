@@ -1,14 +1,14 @@
 ;(function() {
-    
+
     var helpers = {};
-    
+
     /**
      * This function is used to transform the key from a schema into the title used in a label.
      * (If a specific title is provided it will be used instead).
-     * 
+     *
      * By default this converts a camelCase string into words, i.e. Camel Case
      * If you have a different naming convention for schema keys, replace this function.
-     * 
+     *
      * @param {String}  Key
      * @return {String} Title
      */
@@ -29,7 +29,7 @@
      * @return {Template}   Compiled template
      */
     helpers.createTemplate = function(str) {
-        //Store user's template options 
+        //Store user's template options
         var _interpolateBackup = _.templateSettings.interpolate;
 
         //Set custom template settings
@@ -42,13 +42,13 @@
 
         return template;
     };
-    
-    
+
+
     /**
      * Return the editor constructor for a given schema 'type'.
      * Accepts strings for the default editors, or the reference to the constructor function
      * for custom editors
-     * 
+     *
      * @param {String|Function} The schema type e.g. 'Text', 'Select', or the editor constructor e.g. editors.Date
      * @param {Object}          Options to pass to editor, including required 'key', 'schema'
      * @return {Mixed}          An instance of the mapped editor
@@ -63,15 +63,15 @@
 
         return new constructorFn(options);
     }
-    
+
 
     var Form = Backbone.View.extend({
-        
+
         //Field views
         fields: null,
 
         tagName: 'ul',
-        
+
         className: 'bbf-form',
 
         /**
@@ -128,7 +128,12 @@
 
                 var field = new Field(options);
 
-                el.append(field.render().el);
+                //Render the fields with editors, apart from Hidden fields
+                if (itemSchema.type == 'Hidden') {
+                    field.editor = helpers.createEditor('Hidden', options);
+                } else {
+                    el.append(field.render().el);
+                }
 
                 fields[key] = field;
             });
@@ -156,7 +161,7 @@
         /**
          * Get all the field values as an object.
          * Use this method when passing data instead of objects
-         * 
+         *
          * @param {String}  To get a specific field value pass the key name
          */
         getValue: function(key) {
@@ -176,7 +181,7 @@
                 return obj;
             }
         },
-        
+
         /**
          * Update field values, referenced by key
          * @param {Object}  New values to set
@@ -192,7 +197,7 @@
          */
         remove: function() {
             var fields = this.fields;
-            
+
             for (var key in fields) {
                 fields[key].remove();
             }
@@ -212,7 +217,7 @@
         events: {
             'click label': 'logValue'
         },
-        
+
         template: helpers.createTemplate('\
              <label for="{{id}}">{{title}}</label>\
              <div class="bbf-editor"></div>\
@@ -290,7 +295,7 @@
         getValue: function() {
             return this.editor.getValue();
         },
-        
+
         /**
          * Set/change the value of the editor
          */
@@ -346,7 +351,7 @@
             }
             else if (options.value)
                 this.value = options.value;
-            
+
             if (this.value === undefined) this.value = this.defaultValue;
 
             this.schema = options.schema;
@@ -355,7 +360,7 @@
         getValue: function() {
             throw 'Not implemented. Extend and override this method.';
         },
-        
+
         setValue: function() {
             throw 'Not implemented. Extend and override this method.';
         },
@@ -393,7 +398,7 @@
         tagName: 'input',
 
         defaultValue: '',
-        
+
         initialize: function(options) {
             editors.Base.prototype.initialize.call(this, options);
 
@@ -416,7 +421,7 @@
         getValue: function() {
             return $(this.el).val();
         },
-        
+
         /**
          * Sets the value of the form element
          * @param {String}
@@ -442,7 +447,7 @@
         /**
          * Check value is numeric
          */
-        onKeyPress: function(event) {        
+        onKeyPress: function(event) {
             var newVal = $(this.el).val() + String.fromCharCode(event.keyCode);
 
             var numeric = /^[0-9]*\.?[0-9]*?$/.test(newVal);
@@ -450,13 +455,13 @@
             if (!numeric) event.preventDefault();
         },
 
-        getValue: function() {        
+        getValue: function() {
             return parseFloat($(this.el).val(), 10);
         },
-        
+
         setValue: function(value) {
             value = parseFloat(value, 10);
-            
+
             editors.Text.prototype.setValue.call(this, value);
         }
 
@@ -477,6 +482,27 @@
     editors.TextArea = editors.Text.extend({
 
        tagName: 'textarea',
+
+    });
+
+
+    editors.Hidden = editors.Base.extend({
+
+        defaultValue: '',
+
+        initialize: function(options) {
+            editors.Text.prototype.initialize.call(this, options);
+
+            $(this.el).attr('type', 'hidden');
+        },
+
+        getValue: function() {
+            return this.value;
+        },
+
+        setValue: function(value) {
+            this.value = value;
+        }
 
     });
 
@@ -569,14 +595,14 @@
         getValue: function() {
             return $(this.el).val();
         },
-        
+
         setValue: function(value) {
             $(this.el).val(value);
         },
 
         /**
          * Transforms a collection into HTML ready to use in the renderOptions method
-         * @param {Backbone.Collection} 
+         * @param {Backbone.Collection}
          * @return {String}
          */
         _collectionToHtml: function(collection) {
@@ -622,10 +648,10 @@
 
     /**
      * Creates a child form. For editing Javascript objects
-     * 
+     *
      * Special options:
      *   schema.subSchema:    Subschema for object.
-     *   idPrefix, 
+     *   idPrefix,
      */
     editors.Object = editors.Base.extend({
 
@@ -664,10 +690,10 @@
         getValue: function() {
             return this.form.getValue();
         },
-        
+
         setValue: function(value) {
             this.value = value;
-            
+
             this.render();
         },
 
@@ -682,7 +708,7 @@
 
     /**
      * Creates a child form. For editing nested Backbone models
-     * 
+     *
      * Special options:
      *   schema.model:   Embedded model constructor
      */
@@ -733,8 +759,8 @@
         }
 
     });
-    
-    
+
+
     //Exports
     Form.helpers = helpers;
     Form.Field = Field;
