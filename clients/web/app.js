@@ -189,12 +189,41 @@ Ajouter les actions suivantes :
 // TAGS
 
 app.get('/tags', function(req, res){
-
     Tag.find().sort('label', 'ascending').execFind(function (err, tags) {
         res.send(tags);
     });
-
 });
+
+app.get('/tags/semantic', function(req, res){
+    Tag.find({label:/^[^'::']/}).sort('label', 'ascending').execFind(function (err, tags) {
+        res.send(tags);
+    });
+});
+
+app.get('/tags/treeview', function(req, res){
+    Tag.find({label:/^['::']/}).sort('label', 'ascending').execFind(function (err, tags) {
+        res.send(tags);
+    });
+});
+
+app.get('/tags/starting/:str', function(req, res){
+    if (req.params.str.indexOf(':') == 0){
+        // Every unawted search returns all semantic tags
+        Tag.find({label:/^[^'::']/}).sort('label', 'ascending').execFind(function (err, tags) {
+            res.send(tags);
+            return true;
+        });
+    } else {
+        var str = req.params.str;
+        var regular = new RegExp("^" + str);
+        Tag.find({label:regular}).sort('label', 'ascending').execFind(function (err, tags) {
+            res.send(tags);
+        });
+    }
+});
+
+
+
 
 app.post('/tags', function(req, res){
     // TODO
