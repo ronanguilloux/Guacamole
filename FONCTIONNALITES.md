@@ -118,7 +118,9 @@ version 1.1
 
 * Import/export d'une archive de documents (.zip)
 * Recherche par contributeur (le dernier contributeur uniquement, pas de gestion d'historique)
-* Vue "Recherche avacnée" : +1 critère "recherche par extension de fichier"
-* Vue "Tags sans documents attachés" et bouton de suppression de ces tags
+* Vue "Recherche avancée" : + 1 critère "recherche par extension de fichier"
+* Vue "Tags sans documents attachés" et bouton de suppression de ces tags sans docuemnts attachés
+* Profil administrateur / contributeur / lecture seule
+* oAuth ?
 
 
