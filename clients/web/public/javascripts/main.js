@@ -123,7 +123,7 @@ var Tags = Backbone.Collection.extend({
     url: '/tags',
 
     /*
-     * Build tow arrays of sematic é treview tags,
+     * Returns 'semantic' & 'treeview' tags,
      * assuming they are given mixed up in an array
      * & treeview tags start with the regular '::' separator
      */
@@ -236,12 +236,6 @@ var DocumentEditView = Backbone.View.extend({
         tagList = tagColl.getTagsByType(tags);
         $('#tags', form.el).val(tagList.semantic.join(', ')); // the semantic ones
         this.renderLocations(tagList.treeview);
-        /*
-        $(this.el).append("<br />Emplacements : <ul id='locations'><li>" + tagList.treeview.join('</li><li>').split('::').join('/') +  "</li></ul>"); // the treview ones
-        if($('ul#locations').children().length){
-            console.log('no locations ?');
-        }
-        */
 
         return this;
     },
@@ -258,7 +252,7 @@ var DocumentEditView = Backbone.View.extend({
             $(this.el).append('<div class="locations"><ul>');
             var list = '';
             _.each(tags, function(tagLabel){
-                list += '<li>' + tagLabel.split('::').join('/') + '</li>';
+                list += '<li><a href="/#tags/' + tagLabel + '">' + tagLabel.split('::').join('/') + '</a></li>';
             });
             // we also conserve a flat list of all locations, cf. submit()
             $('.locations ul',$(this.el)).before(label).append(list).append(hidden);
@@ -425,7 +419,7 @@ var DocumentsView = Backbone.View.extend({
 //        resetViews();
 
         $(this.el).empty().show();
-        $(this.el).append('<nav><ul></ul></nav>')
+        $(this.el).append('Vous êtes ici : <nav><ul></ul></nav>')
         $(this.el).append('<ul class="tags"></ul><hr>');
         $(this.el).append('<ul class="documents"></ul>');
         $(this.el).show();
@@ -582,8 +576,12 @@ var TagsView = Backbone.View.extend({
             $.extend(true, tree, res); // recursive extend
         });
 
+        var sidetreecontrol = $('<div>').attr('id', 'sidetreecontrol').append('<a href="#">Réduire</a> | <a href="#">Développer</a>');
+
+        $('div.tree', this.el).append(sidetreecontrol);
         $('div.tree', this.el).append(this.toul(tree)).treeview({
             'collapsed': true,
+            'control':'#sidetreecontrol'
         });
 
     },
