@@ -35,14 +35,26 @@ See http://help.github.com/fork-a-repo/
     ~/: nodejs app.js
 
 
+Documentation
+-------------
+
+Install dox to geenrate code documentation :
+
+    ~/: npm install dox
+    ~/: node_modules/dox/bin/dox --title Guacamole app.js > doc/index.html
+    ~/: lynx doc/index.html
+
+
 Tests
 -----
 
 Start a server :
-    node app.js (or better : hotnode app.js)
+
+    ~/: node app.js (or better : hotnode app.js)
 
 Then while server is running, run :
-    node tests.js
+
+    ~/: node tests.js
 
 
 License Information
