@@ -200,6 +200,15 @@ var emptyViews = function(){
     $('#item').empty();
 };
 
+
+// Autocompletion helpers :
+function splitByComma( val ) {
+    return val.split( /,\s*/ );
+}
+function extractLast( term ) {
+    return splitByComma( term ).pop();
+}
+
 /*
  * DocumentEditView
  */
@@ -235,6 +244,48 @@ var DocumentEditView = Backbone.View.extend({
         tagColl = new Tags();
         tagList = tagColl.getTagsByType(tags);
         $('#tags', form.el).val(tagList.semantic.join(', ')); // the semantic ones
+
+        // --- AUTOCOMPLETION :
+        $('#tags', form.el)
+			// don't navigate away from the field on tab when selecting an item
+			.bind( "keydown", function( event ) {
+				if ( event.keyCode === $.ui.keyCode.TAB &&
+						$( this ).data( "autocomplete" ).menu.active ) {
+					event.preventDefault();
+				}
+			})
+			.autocomplete({
+				source: function( request, response ) {
+					$.getJSON( "/tags/starting/" + extractLast(request.term), {
+					}, response );
+				},
+				search: function() {
+					// custom minLength
+					var term = extractLast( this.value );
+					if ( term.length < 1 ) {
+						return false;
+					}
+					console.log('searching');
+				},
+				focus: function() {
+					// prevent value inserted on focus
+					return false;
+				},
+				select: function( event, ui ) {
+					var terms = splitByComma( this.value );
+					// remove the current input
+					terms.pop();
+					// add the selected item
+					terms.push( ui.item.value );
+					// add placeholder to get the comma-and-space at the end
+					terms.push( "" );
+					this.value = terms.join( ", " );
+					console.log('select ended');
+					return false;
+				}
+			});
+			// --- / AUTOCOMPLETION
+
         this.renderLocations(tagList.treeview);
 
         return this;
@@ -246,7 +297,6 @@ var DocumentEditView = Backbone.View.extend({
      */
     renderLocations : function(tags) {
         if(tags.length){
-            console.log(tags);
             var label = '<p>Emplacements&nbsp;:</p>';
             var hidden = '<input type="hidden" name="treeList" id="treeList" value="' + tags + '" />';
             $(this.el).append('<div class="locations"><ul>');
@@ -673,6 +723,7 @@ transferComplete = function(evt){
         $('#dropArea img').remove();
     }
 };
+
 
 
 });
