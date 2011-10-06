@@ -245,6 +245,14 @@ app.get('/tags', function(req, res, crossSitePolicy){
 
 });
 
+app.get('/tags?:type', function(req, res, crossSitePolicy){
+
+    Tag.find().sort('label', 'ascending').execFind(function (err, tags) {
+        res.send(tags, crossSitePolicy);
+    });
+
+});
+
 app.post('/tags', function(req, res, crossSitePolicy){
     // TODO
 });
