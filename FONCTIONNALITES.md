@@ -106,7 +106,6 @@ Formulaire permettant de modifier les champs d'un document :
 Vue "Edition d'un tag"
 ----------------------
 
-* Modification du libellé d'un tag
 * Suppression d'un tag, proposé uniquenemt si plus aucun document ne lui est rattaché
 
 
