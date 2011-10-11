@@ -362,8 +362,10 @@ var DocumentView = Backbone.View.extend({
 
     initialize: function(){
         //_.bindAll(this, 'render', 'delete');
+
         _.bindAll(this, 'render');
-        //this.model.bind('destroy', this.remove); // ? A tester si ça marche vraiment : suppression dans la liste si supp dans modèle        this.model.bind('destroy', this.remove); // ? A tester si ça marche vraiment : suppression dans la liste si supp dans modèle
+        //this.model.bind('destroy', this.remove); // ? A tester si ça marche vraiment : suppression dans la liste si supp dans modèle
+        //this.model.bind('destroy', this.remove); // ? A tester si ça marche vraiment : suppression dans la liste si supp dans modèle
         this.model.bind('change', this.render);
     },
 

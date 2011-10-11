@@ -42,8 +42,6 @@ var app = module.exports = express.createServer(
     })
 );
 
-
-
 /**
  * Server configuration
  */
@@ -51,9 +49,7 @@ var app = module.exports = express.createServer(
 app.configure(function(){
     app.set('views', __dirname + '/views');
     app.set('view engine', 'jade');
-
     app.use(express.compiler({ src: __dirname + '/public', enable: ['less']}));
-
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(app.router);
@@ -74,6 +70,9 @@ app.configure('production', function(){
 
 /**
  * Model definition, using mongoose
+ *
+ * @param {Object} longoose
+ * @param {Function} callback
  */
 
 models.define(mongoose, function(){
@@ -81,6 +80,23 @@ models.define(mongoose, function(){
     app.Tag = Tag = mongoose.model('Tag');
     db = mongoose.connect('mongodb://localhost/docs');
 });
+
+/**
+ * Error handler
+ * log errors & send a (503 by default) status code with error message
+ *
+ * @param {ServerResponse} response
+ * @param {Mixed} error
+ * @param {Integer} HTTP status code
+ * @return {ServerResponse}
+ */
+
+var handleError = function(res, err, status){
+    status = status || 503; // Service Unavailable
+    err = err || status;
+    console.log({'status': status, 'error': err});
+    return res.send(status, {error: err});
+}
 
 
 app.get('/', function(req, res){
@@ -90,7 +106,7 @@ app.get('/', function(req, res){
 app.post('/', function(req, res){
 
     req.form.complete(function(err, fields, files) {
-
+        if (err) return handleError(res, err);
         if (!err && files.resource){
             var doc = new Document(_.extend(fields, {
                 resource: {
@@ -111,15 +127,16 @@ app.post('/', function(req, res){
 });
 
 /**
- * DOCUMENT Routes
+ * DOCUMENT Routes :
  */
 
 /**
  * GET documents
  *
- * @param Object req : request
- * @param Object res : response
- * @return Json tags
+ * @param {Object} request
+ * @param {Object} response
+ * @param {Object} headers
+ * @return {Json} documents list
  * @api public
  */
 
@@ -140,6 +157,7 @@ app.get('/documents', function(req, res, headers){
     // LISTE et QUERY
     // limit, offset, filtres, sort, search
     Document.find(query, function (err, docs){
+        if (err) return handleError(res, err);
         res.send(docs);
     });
 
@@ -147,19 +165,31 @@ app.get('/documents', function(req, res, headers){
 
 /**
  * GET documents/:slug
+ *
+ * @param {Object} request
+ * @param {Object} response
+ * @param {Object} headers
+ * @return {Json} one document matching the slug parameter
+ * @api public
  */
 
 app.get('/documents/:slug', function(req, res, headers){
-
     Document.findOne({ slug: req.params.slug }, function(err, doc){
-        if (!doc) return res.send({error:'Document not found'}); // TODO 404
+        if (err) return handleError(res, err);
+        if (!doc) return res.send(404);
         res.send(doc, headers);
     });
 
 });
 
 /**
- * POST documents (create)
+ * POST document, CREATE a document
+ *
+ * @param {Object} request
+ * @param {Object} response
+ * @param {Object} headers
+ * @return {Json} the saved document
+ * @api public
  */
 
 app.post('/documents', function(req, res, headers){
@@ -167,7 +197,8 @@ app.post('/documents', function(req, res, headers){
     // création thumbnail
 
     req.form.complete(function(err, fields, files){
-        if (!err && files.resource){
+        if (err) return handleError(res, err);
+        if (files.resource){
             var doc = new Document(_.extend(fields, {
                 resource: {
                     name: files.resource.filename,
@@ -175,24 +206,28 @@ app.post('/documents', function(req, res, headers){
                 }
             }));
             doc.save(function(err){
-                res.send(doc, headers);
-                if (err) console.log(err);
+                if (err) return handleError(res, err);
+                return res.send(doc, headers);
             });
-        } else {
-            res.send({}, headers); // TODO 500
         }
+        return handleError(res, {'message' : 'No files resources found'});
     });
 
 });
 
 /**
  * DELETE documents
+ *
+ * @param {Object} request
+ * @param {Object} response
+ * @param {Object} headers
  */
 
 app.del('/documents/:id', function(req, res, headers){
 
     Document.findOne({ _id: req.params.id }, function(err, doc){
-        if (!doc) return res.send({error:'Document not found'}); // TODO 404
+        if (err) return handleError(res, err);
+        if (!doc) return res.send(404);
         doc.remove(function(){
             res.send({}, headers);
         });
@@ -210,21 +245,26 @@ app.put('/documents/:id', function(req, res, headers){
     // todo : si pj, recalculer thumbnail
 
     Document.findOne({ _id: req.params.id }, function(err, doc){
+        if (err) return handleError(res, err);
+        if (!doc) return res.send(404);
         doc.set(req.body);
         doc.save(function(err){
-            if (!err) return res.send(doc, headers);
-            return res.send(err, headers);
+            if (err) return handleError(res, err);
+            return res.send(doc, headers);
         });
     });
 
 });
 
-/**
- * TODO :
+/* TODO :
  * Ajouter les actions suivantes :
- * - modification de masse (sur selection de documents) : sur liste
- * - suppression masse : sur liste
- * - update thumb : forcer recalcul de la thumbnail
+ *   - modification de masse (sur selection de documents) : sur liste
+ *   - suppression masse : sur liste
+ *  - update thumb : forcer recalcul de la thumbnail
+ */
+
+/**
+ * TAGS Routes :
  */
 
 /**
@@ -232,9 +272,12 @@ app.put('/documents/:id', function(req, res, headers){
  */
 
 app.get('/tags', function(req, res, headers){
+
     Tag.find().sort('label', 'ascending').execFind(function (err, tags) {
+        if (err) return handleError(res, err);
         res.send(tags, headers);
     });
+
 });
 
 /**
@@ -242,9 +285,12 @@ app.get('/tags', function(req, res, headers){
  */
 
 app.get('/tags/semantic', function(req, res, headers){
+
     Tag.find({label:/^[^'::']/}).sort('label', 'ascending').execFind(function (err, tags) {
+        if (err) return handleError(res, err);
         res.send(tags, headers);
     });
+
 });
 
 /**
@@ -253,9 +299,12 @@ app.get('/tags/semantic', function(req, res, headers){
  */
 
 app.get('/tags/treeview', function(req, res){
+
     Tag.find({label:/^['::']/}).sort('label', 'ascending').execFind(function (err, tags) {
+        if (err) return handleError(res, err);
         res.send(tags);
     });
+
 });
 
 /**
@@ -263,49 +312,75 @@ app.get('/tags/treeview', function(req, res){
  */
 
 app.get('/tags/starting/:str', function(req, res, headers){
+
 	var result = [];
 	// unwanted requests give all semantic tags
     if (req.params.str.indexOf(':') == 0){
         // Every unawted search returns all semantic tags
         Tag.find({label:/^[^'::']/}).sort('label', 'ascending').execFind(function (err, tags) {
-            res.send(tags, headers);
-        });
-    } else {
-        var str = req.params.str;
-        var regular = new RegExp("^" + str);
-        Tag.find({label:regular}).sort('label', 'ascending').execFind(function (err, tags) {
-           if(0 == tags.length){
-               res.send(204);
-               // res.writeHead(204);
-               //res.end();
-           } else {
-               res.send(tags, headers);
-           }
+            if (err) return handleError(res, err);
+            return res.send(tags, headers);
         });
     }
 
-});
+    var regular = new RegExp("^" + req.params.str);
+    Tag.find({label:regular}).sort('label', 'ascending').execFind(function (err, tags) {
+        if (err) return handleError(res, err);
+        if(0 == tags.length){
+            return res.send(204);
+        }
+        res.send(tags, headers);
 
+    });
 
-app.post('/tags', function(req, res, headers){
-    // TODO
-});
-
-app.put('/tags/:id', function(req, res, headers){
-    // TODO
-});
-
-app.del('/tags/:id', function(req, res, headers){
-    // TODO
-    // Interdire si documents ou forcer ?
 });
 
 
 /**
+ * POST tags (create)
+ */
+
+app.post('/tags', function(req, res, headers){
+
+    // TODO
+    res.writeHead(501, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'not implemented' }));
+
+});
+
+/**
+ * PUT tags (update)
+ */
+
+app.put('/tags/:id', function(req, res, headers){
+
+    // TODO
+    res.writeHead(501, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'not implemented' }));
+
+});
+
+app.del('/tags/:id', function(req, res, headers){
+
+    // TODO
+    // Interdire si documents ou forcer ?
+    res.writeHead(501, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'not implemented' }));
+
+});
+
+/**
+ * Documentation :
+ */
+
+/**
+ *
  * Introspection-based documentation
  * using app.routes.routes properties
  */
+
 app.get('/documentation', function(req, res, headers){
+
     var routesDoc = [];
     var fillRoutesDoc = function(element, index, array){
         routesDoc.push(element.method.toUpperCase() + ' ' + element.path);
@@ -321,6 +396,7 @@ app.get('/documentation', function(req, res, headers){
             "Available requests URI": routesDoc,
         }
     }, headers);
+
 });
 
 
