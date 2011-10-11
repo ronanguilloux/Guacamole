@@ -1,26 +1,50 @@
 
 
-var http = require('http'),
-    vows = require('vows'),
+var APIeasy = require('api-easy'),
+    sys = require('sys'),
     assert = require('assert'),
     route = {'host': "localhost", 'port': 4000};
 
 
-function assertStatus(code) {
-    return function (res,err) {
-        assert.equal (res.statusCode, code);
-    };
-}
+var suite = APIeasy.describe('your/awesome/api');
 
-var api = {
-    get: function (path) {
-        route.path = '/';
-        return function () {
-            http.get(route, this.callback);
-        };
-    }
-};
 
+//usage : https://github.com/indexzero/api-easy/#using-api-easy
+// exmaple : https://github.com/indexzero/api-easy/blob/master/test/run-test.js
+suite.discuss('When using Guacamole REST API')
+    .use(route.host, route.port)
+    .setHeader('Content-Type', 'application/json')
+    //.post({ test: 'data' })
+
+    // --- GET documents/+ ---
+    .get('/')
+    .expect(200)
+    .get('/documents')
+    .expect(200)
+    .get('/documents/donotremovejpg')
+    .expect(200)
+    .expect('should contains valid response', function (err, res, body) {
+        body = JSON.parse(body);
+        assert.equal(body.slug, 'donotremovejpg');
+        assert.equal(body.resource.name, 'donotremove.jpg');
+    })
+
+
+    // --- GET tags/+ ---
+    .get('/tags')
+    .expect(200)
+
+    // --- GET documentation ---
+    .next()
+    .get('/documentation')
+    .expect(200)
+
+    //.expect(200, { ok: true })
+    //.expect('should respond with x-test-header', function (err, res, body) {
+    // assert.include(res.headers, 'x-test-header');
+    //})
+.export(module);
+/*
 vows.describe('Guacamole routes test suite').addBatch({
     'GET /': {
         topic: api.get('/'),
@@ -29,6 +53,14 @@ vows.describe('Guacamole routes test suite').addBatch({
     'GET /documents': {
         topic: api.get('/documents'),
         'should respond with a 200 OK': assertStatus(200)
+    },
+    'GET /documents/donotremovejpg': {
+        topic: api.get('/documents/donotremovejpg'),
+        'should respond with a 200 OK': assertStatus(200),
+    },
+    'GET /documents/donotremovejpg': {
+        topic: api.getBody('/documents/donotremovejpg'),
+        'should respond with a 200 OK': assertContains('jpg')
     },
     'GET /tags': {
         topic: api.get('/tags'),
@@ -57,4 +89,4 @@ vows.describe('Guacamole routes test suite').addBatch({
         'should respond with a 200 OK': assertStatus(200)
     }
 }).run();
-
+*/

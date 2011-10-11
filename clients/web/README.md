@@ -15,7 +15,8 @@ Dependencies
 * jade
 * less
 * mongoose
-* underscoree
+* underscore
+* api-easy
 
 Uses
 

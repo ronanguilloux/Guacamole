@@ -22,3 +22,27 @@ STATISTIQUES
 INTERFACE STANDALONE
 - node.js (?)
 - synchronisation
+
+
+ROUTES
+
+GET documents
+POST documents (create)
+GET documents/:id
+PUT documents/:id (update)
+DEL documents/:id
+
+GET tags
+POST tags (create)
+DEL tags/:id
+
+POST documents/batch/add or set/ + POST vars : 
+{
+    ids:[1, 2, n],
+    params : {
+        clef1: valeur1 (valeur1 : array or string),
+        clef2: valeur2
+    }
+}
+
+POST documents/batch/delete + POST vars : {ids:[1, 2, n]}
