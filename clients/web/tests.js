@@ -18,7 +18,10 @@ suite.discuss('When using Guacamole REST API')
 
     // --- GET documents/+ ---
     .get('/')
-    .expect(200)
+    .expect('should contains a dropzone', function (err, res, body) {
+        assert.ok(body.toString().contains('dropzone'))
+        console.log(body.toString());
+    })
     .get('/documents')
     .expect(200)
     .get('/documents/donotremovejpg')
